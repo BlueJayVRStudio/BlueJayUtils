@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -43,29 +44,12 @@ namespace bluejayvrstudio
 
     public class TimeFormatter
     {
-        public static string TimeFormat(float _Time)
+        public static string mmss(float _Time)
         {
-            int Seconds = ((int)_Time)%60;
-            int Minutes = (int)(_Time/60.0f);
-
-            if (Minutes == 0) 
-            {
-                if (Seconds == 0) return "00:00";
-                else if (Seconds < 10) return "00" + ":0" + Seconds.ToString();
-                else return "00" + ":" + Seconds.ToString();
-            }
-            else if (Minutes < 10) 
-            {
-                if (Seconds == 0) return "0" + Minutes.ToString() + ":00";
-                else if (Seconds < 10) return "0" + Minutes.ToString() + ":0" + Seconds.ToString();
-                else return "0" + Minutes.ToString() + ":" + Seconds.ToString();
-            }
-            else
-            {
-                if (Seconds == 0) return Minutes.ToString() + ":00";
-                else if (Seconds < 10) return Minutes.ToString() + ":0" + Seconds.ToString();
-                else return Minutes.ToString() + ":" + Seconds.ToString();
-            }
+            TimeSpan timeSpan = TimeSpan.FromSeconds(_Time);
+            DateTime dateTime = DateTime.Today.Add(timeSpan);
+            string formattedTime = dateTime.ToString("mm:ss");
+            return formattedTime;
         }
     }
 }
