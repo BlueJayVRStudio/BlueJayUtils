@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using Unity.Netcode;
 
 namespace bluejayvrstudio
 {
@@ -19,6 +20,24 @@ namespace bluejayvrstudio
     }
 
     public class TempSingleton<T> : MonoBehaviour where T : MonoBehaviour
+    {
+        // singleton only in the current scene
+        private static T inst;
+        public static T CurrInst
+        {
+            get
+            {
+                if (inst == null)
+                {
+                    inst = GameObject.FindObjectOfType<T>();
+                }
+
+                return inst;
+            }
+        }
+    }
+
+    public class NetworkSceneSingleton<T> : NetworkBehaviour where T : NetworkBehaviour
     {
         // singleton only in the current scene
         private static T inst;
