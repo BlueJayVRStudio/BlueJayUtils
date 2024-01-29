@@ -241,4 +241,47 @@ namespace bluejayvrstudio
             return rotation;
         }
     }
+
+    [Serializable]
+    public class _Transform
+    {
+        public _Vector3 position;
+        public _Vector3 localPosition;
+        public _Quaternion rotation;
+        public _Quaternion localRotation;
+        public _Vector3 localScale;
+        
+        public _Transform() 
+        {
+            position = new _Vector3(0,0,0);
+            localPosition = new _Vector3(0,0,0);
+            rotation = new _Quaternion(0,0,0,1);
+            localRotation = new _Quaternion(0,0,0,1);
+            localScale = new _Vector3(1,1,1);
+        }
+
+        public _Transform(Vector3 pos, Vector3 localPos, Quaternion rot, Quaternion localRot, Vector3 localSc)
+        {
+            position = _Vector3.FromUnityVector3(pos);
+            localPosition = _Vector3.FromUnityVector3(localPos);
+            rotation = _Quaternion.FromUnityQuaternion(rot);
+            localRotation = _Quaternion.FromUnityQuaternion(localRot);
+            localScale = _Vector3.FromUnityVector3(localSc);
+        }
+
+        public static _Transform FromUnityTransform(Transform UnityTransform)
+        {
+            return new _Transform(UnityTransform.position, UnityTransform.localPosition, UnityTransform.rotation, UnityTransform.localRotation, UnityTransform.localScale);
+        }
+
+        public void PopulateTransform(GameObject go)
+        {
+            var transform = go.transform;
+            // transform.position = position.ToUnityVector3();
+            transform.localPosition = localPosition.ToUnityVector3();
+            // transform.rotation = rotation.ToUnityQuaternion();
+            transform.localRotation = localRotation.ToUnityQuaternion();
+            transform.localScale = localScale.ToUnityVector3();
+        }
+    }
 }
