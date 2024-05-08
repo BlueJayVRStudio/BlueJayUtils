@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace bluejayvrstudio
 {
-    public class CustomM : MonoBehaviour
+    public class CustomM
     {
         public static Vector3 XZPlane(Vector3 vec)
         {
@@ -40,6 +40,23 @@ namespace bluejayvrstudio
         {
             return new Vector3(vec.x + x, vec.y + y, vec.z + z);
         }
+
+        public static Vector3 GetWorldPosition(Vector3 localPosition, GameObject anchor) {
+            return anchor.transform.TransformPoint(localPosition);
+        }
+        
+        public static Quaternion GetWorldRotation(Quaternion localRotation, GameObject anchor) {
+            return anchor.transform.rotation * localRotation;
+        }
+
+        public static Vector3 GetRelativePosition(GameObject subject, GameObject anchor) {
+            return anchor.transform.InverseTransformPoint(subject.transform.position);
+        }
+
+        public static Quaternion GetRelativeRotation(GameObject subject, GameObject anchor) {
+            return Quaternion.Inverse(anchor.transform.rotation) * subject.transform.rotation;
+        }
+
     }
 
     public class TimeFormatter
