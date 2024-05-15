@@ -6,6 +6,7 @@ using System.Linq;
 using bluejayvrstudio;
 using ClientMessagesProto;
 using Google.Protobuf;
+using System.Collections.Concurrent;
 
 public class UniversalInputHandler : TempSingleton<UniversalInputHandler>
 {
@@ -38,6 +39,21 @@ public class UniversalInputHandler : TempSingleton<UniversalInputHandler>
     {
         input_lookup["SELF"] = get_button_input();
         current_player_input = input_lookup["SELF"];
+
+        // FOR DEBUG
+        // if (input_lookup["SELF"] != null) {
+        //     if (input_lookup["SELF"].DownMask != 0 ) {
+        //         foreach (OVRInput.RawButton button in Enum.GetValues(typeof(OVRInput.RawButton))) {
+        //             if (((int) button & input_lookup["SELF"].DownMask) != 0) {
+        //                 Debug.Log("down: " + button.ToString());}}
+        //     }
+
+        //     if (input_lookup["SELF"].UpMask != 0 ) {
+        //         foreach (OVRInput.RawButton button in Enum.GetValues(typeof(OVRInput.RawButton))) {
+        //             if (((int) button & input_lookup["SELF"].UpMask) != 0) {
+        //                 Debug.Log("up: " + button.ToString());}}
+        //     }
+        // }
 
         foreach (string address in input_queue.Keys.ToList()) {
             if (input_queue[address].Count > 0) {

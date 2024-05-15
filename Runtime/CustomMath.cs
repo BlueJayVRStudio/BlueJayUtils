@@ -57,6 +57,11 @@ namespace bluejayvrstudio
             return Quaternion.Inverse(anchor.transform.rotation) * subject.transform.rotation;
         }
 
+        public static void Follow(GameObject subject, GameObject target) {
+            subject.transform.position = target.transform.position;
+            subject.transform.rotation = target.transform.rotation;
+        }
+
     }
 
     public class TimeFormatter

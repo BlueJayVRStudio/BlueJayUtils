@@ -9,6 +9,7 @@ using ServerMessagesProto;
 using ClientMessagesProto;
 using Google.Protobuf;
 using TransformProto;
+using System.Threading.Tasks;
 
 public class NetworkServer : TempSingleton<NetworkServer>
 {
@@ -17,7 +18,7 @@ public class NetworkServer : TempSingleton<NetworkServer>
 
     float interval;
     float timer;
-    ulong time_stamp = 1;
+    ulong time_stamp;
 
     Dictionary<string, GameObject> NetworkObjects;
     public void AddItem(string uuid, GameObject _object) {
@@ -26,6 +27,10 @@ public class NetworkServer : TempSingleton<NetworkServer>
     public void RemoveItem(string uuid) {
         NetworkObjects.Remove(uuid);
     }
+
+    public bool ClientExists(string address) {
+        return DiscoveryServer.ClientExists(address);
+    } 
 
     public ConcurrentQueue<string> InstantiateQueue;
     public ConcurrentQueue<(string, byte[])> positions_queue;
@@ -38,6 +43,13 @@ public class NetworkServer : TempSingleton<NetworkServer>
     void Awake()
     {
         DiscoveryServer = GetComponent<NetworkDiscoveryServer>();
+    }
+
+    void OnEnable() 
+    {
+        time_stamp = 1;
+        interval = 1.0f / NetworkInit.CurrInst.tickrate;
+        timer = interval;
         NetworkObjects = new();
         players_transform_time_stamps = new();
         players_axes_time_stamps = new();
@@ -46,12 +58,6 @@ public class NetworkServer : TempSingleton<NetworkServer>
         axes_queue = new();
         input_queue = new();
         input_uuids = new();
-    }
-
-    void OnEnable() 
-    {
-        interval = 1.0f / NetworkInit.CurrInst.tickrate;
-        timer = interval;
     }
 
     void Update()
@@ -159,7 +165,6 @@ public class NetworkServer : TempSingleton<NetworkServer>
     }
 
     public void destroy_player(string address) {
-        if (!UniversalInputHandler.CurrInst.Players.ContainsKey(address)) return;
         Destroy(UniversalInputHandler.CurrInst.Players[address]);
         UniversalInputHandler.CurrInst.Players.Remove(address);
         players_transform_time_stamps.Remove(address);

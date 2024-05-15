@@ -58,4 +58,20 @@ public class ProtoTransformHelper
             }
         };
     }
+
+    public static LOCALTRANSFORM FromUnityLocalTransform(Vector3 localPosition, Quaternion localRotation) {
+        return new LOCALTRANSFORM() {
+            LocalPosition = new VECTOR3() {
+                X = localPosition.x,
+                Y = localPosition.y,
+                Z = localPosition.z
+            },
+            LocalRotation = new QUATERNION() {
+                X = localRotation.x,
+                Y = localRotation.y,
+                Z = localRotation.z,
+                W = localRotation.w
+            }
+        };
+    }
 }

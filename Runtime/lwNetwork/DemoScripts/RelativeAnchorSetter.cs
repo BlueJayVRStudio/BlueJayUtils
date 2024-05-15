@@ -13,5 +13,7 @@ public class RelativeAnchorSetter : MonoBehaviour
     {
         transform.position = CenterSetter.transform.position;
         transform.rotation = Quaternion.LookRotation(CustomM.XZPlane(DirectionSetter.transform.position-CenterSetter.transform.position), Vector3.up);
+
+        CenterSetter.transform.rotation = transform.rotation;
     }
 }

@@ -18,15 +18,15 @@ public class NetworkClient : MonoBehaviour
     float timer;
     ulong time_stamp = 1;
 
-    Queue<LWINPUT> InputQueue = new();
-    LWINPUT CurrentInput = null;
+    Queue<LWINPUT> InputQueue;
+    LWINPUT CurrentInput;
     float ack_timeout = 30.0f / 1000;
     float ack_timer = 0.0f;
     public bool FlushInputs = false;
 
-    Dictionary<string, GameObject> NetworkObjects;
+    Dictionary<string, GameObject> NetworkObjects = null;
     public GameObject PlayerPrefab = null;
-    ulong stream_collection_time_stamp = 0;
+    ulong stream_collection_time_stamp;
     Dictionary<string, ulong> object_time_stamps;
 
     public ConcurrentQueue<byte[]> collection_info_queue;
@@ -36,17 +36,31 @@ public class NetworkClient : MonoBehaviour
     void Awake()
     {
         DiscoveryClient = GetComponent<NetworkDiscoveryClient>();
-        NetworkObjects = new();
-        object_time_stamps = new();
-        collection_info_queue = new();
-        network_object_queue = new();
-        ack_queue = new();
     }
 
     void OnEnable()
     {
+        if (NetworkObjects != null) {
+            foreach (string uuid in NetworkObjects.Keys.ToList()) {
+                Destroy(NetworkObjects[uuid]);
+                NetworkObjects.Remove(uuid);
+            }
+        }
         interval = 1.0f / NetworkInit.CurrInst.tickrate;
         timer = interval;
+        InputQueue = new();
+        CurrentInput = null;
+        NetworkObjects = new();
+        stream_collection_time_stamp = 0;
+        object_time_stamps = new();
+        collection_info_queue = new();
+        network_object_queue = new();
+        ack_queue = new();
+        
+    }
+
+    void OnDisable() {
+        OnEnable();
     }
 
     ulong packetDelay = 0;
@@ -56,19 +70,8 @@ public class NetworkClient : MonoBehaviour
     {
         if (FlushInputs) {
             FlushInputs = false;
-            InputQueue = new();
-            CurrentInput = null;
             ack_timer = 0.0f;
-
-            collection_info_queue = new();
-            network_object_queue = new();
-            ack_queue = new();
-            stream_collection_time_stamp = 0;
-            object_time_stamps = new();
-            foreach (string uuid in NetworkObjects.Keys.ToList()) {
-                Destroy(NetworkObjects[uuid]);
-                NetworkObjects.Remove(uuid);
-            }
+            OnDisable();
         }
         if (DiscoveryClient.ServerIP == null) return;
         
@@ -114,6 +117,7 @@ public class NetworkClient : MonoBehaviour
                 ack_timer = 0.0f;
             }
         }
+        
         // Re-request ack if timeout
         if (ack_timer >= ack_timeout) {
             if (CurrentInput != null) {

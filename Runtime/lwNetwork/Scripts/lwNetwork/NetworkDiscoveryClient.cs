@@ -47,6 +47,7 @@ public class NetworkDiscoveryClient : MonoBehaviour
             timer = 0f;
             if (ServerAddress == null) {
                 SendBroadcast();
+                // Debug.Log("Sending discovery request");
             }
         }
         timer += Time.deltaTime;
@@ -76,28 +77,29 @@ public class NetworkDiscoveryClient : MonoBehaviour
         try {
             IPEndPoint ip = new IPEndPoint(IPAddress.Any, listenPort);
             byte[] bytes = udpClient.EndReceive(ar, ref ip);
-            string message = Encoding.UTF8.GetString(bytes);
-
-            if (message.Length >= 9)
+        
+            if (bytes.Length >= 9)
             {
-                if (message.Substring(0, 9) == ServerConsts.CONNECTION_REPLY) {
+                string message = Encoding.UTF8.GetString(bytes.Skip(0).Take(9).ToArray());
+
+                if (message == ServerConsts.CONNECTION_REPLY) {
                     ServerAddress = ip.Address;
                     alive_timer = 0f;
                     Debug.Log("Received response from: " + ip.Address.ToString() + " Message: " + message);
                 }
-                if (message.Substring(0, 9) == ServerConsts.COLLECTION_INFO) {
+                if (message == ServerConsts.COLLECTION_INFO) {
                     if (ServerAddress != null && ip.Address.ToString() == ServerAddress.ToString() && alive_timer < timeout_limit) {
                         alive_timer = 0f;
                         Client.collection_info_queue.Enqueue(bytes.Skip(9).Take(bytes.Length - 9).ToArray());
                     }
                 }
-                if (message.Substring(0, 9) == ServerConsts.NETWORK_OBJECT) {
+                if (message == ServerConsts.NETWORK_OBJECT) {
                     if (ServerAddress != null && ip.Address.ToString() == ServerAddress.ToString() && alive_timer < timeout_limit) {
                         alive_timer = 0f;
                         Client.network_object_queue.Enqueue(bytes.Skip(9).Take(bytes.Length - 9).ToArray());
                     }
                 }
-                if (message.Substring(0, 9) == ServerConsts.ACK) {
+                if (message == ServerConsts.ACK) {
                     if (ServerAddress != null && ip.Address.ToString() == ServerAddress.ToString() && alive_timer < timeout_limit) {
                         alive_timer = 0f;
                         Client.ack_queue.Enqueue(bytes.Skip(9).Take(bytes.Length - 9).ToArray());
