@@ -9,7 +9,7 @@ public class NetworkInit : TempSingleton<NetworkInit>
     public int tickrate;
     void Awake()
     {
-        Application.targetFrameRate = 120;
+        Application.targetFrameRate = 300;
         OVRManager.display.displayFrequency = 120.0f;
     }
 

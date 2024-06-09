@@ -63,8 +63,13 @@ public class NetworkClient : MonoBehaviour
         OnEnable();
     }
 
-    ulong packetDelay = 0;
+    ulong fails = 0;
     ulong Frames = 0;
+    double FailRate;
+
+    public (ulong, ulong, double) GetSuccessRate() {
+        return (fails, Frames, FailRate);
+    }
 
     void Update()
     {
@@ -74,25 +79,29 @@ public class NetworkClient : MonoBehaviour
             OnDisable();
         }
         if (DiscoveryClient.ServerIP == null) return;
-        
+
         // FOR DEBUG
-        // timer -= Time.deltaTime;
+        timer -= Time.deltaTime;
         // if (timer <= 0f) Frames++;
-        // if (network_object_queue.Count > 1) packetDelay += (ulong) network_object_queue.Count - 1;
-        // if (Frames % (ulong) NetworkInit.CurrInst.tickrate == 0) Debug.Log( "Receive success rate: " +  (1 - ((double) packetDelay / Frames)).ToString() + " %"  );
+        // if (network_object_queue.Count == 0 && timer <= 0f) fails++;
+        // if (Frames % (ulong) NetworkInit.CurrInst.tickrate == 0 && Frames != 0)
+        // {
+        //     FailRate = (double) fails / Frames;
+        //     Debug.Log("Receive fail rate: " + FailRate.ToString() + " %");
+        // }
 
         // Debug.Log("Object Queue Size: " + network_object_queue.Count.ToString());
-        while (collection_info_queue.Count > 0) {
+        while (collection_info_queue.Count > 0 && timer <= 0f) {
             collection_info_queue.TryDequeue(out byte[] toReceive);
             receive_collection(toReceive);}
-        while (network_object_queue.Count > 0) {
+        while (network_object_queue.Count > 0 && timer <= 0f) {
             network_object_queue.TryDequeue(out byte[] toReceive);
             receive_network_object(toReceive);}
-        while (ack_queue.Count > 0) {
+        while (ack_queue.Count > 0 && timer <= 0f) {
             ack_queue.TryDequeue(out byte[] toReceive);
             receive_ack(toReceive);}
 
-        timer -= Time.deltaTime;
+        // timer -= Time.deltaTime;
         if (timer <= 0f) {
             timer = interval;
             // Stream controller positions and thumbstick axes
@@ -140,6 +149,8 @@ public class NetworkClient : MonoBehaviour
         }
         foreach (string uuid in NetworkObjects.Keys.ToList()) {
             if (!currentCollection.ContainsKey(uuid)) {
+                // FOR DEBUG
+                // Debug.Log("Destroying network object!");
                 Destroy(NetworkObjects[uuid]);
                 NetworkObjects.Remove(uuid);
                 object_time_stamps.Remove(uuid);

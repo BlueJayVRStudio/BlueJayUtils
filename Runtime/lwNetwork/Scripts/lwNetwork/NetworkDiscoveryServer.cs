@@ -7,6 +7,7 @@ using System.Net.Sockets;
 using System.Text;
 using System.Linq;
 using ClientMessagesProto;
+using System.Threading;
 // using UnityEditor.PackageManager;
 // using Google.Protobuf;
 
@@ -46,6 +47,7 @@ public class NetworkDiscoveryServer : MonoBehaviour
         udpSocket.ReceiveBufferSize = 65507;
 
         StartListening();
+        // StartThreadedListener();
         Debug.Log("Is Listening");
     }
 
@@ -125,11 +127,88 @@ public class NetworkDiscoveryServer : MonoBehaviour
 
             udpClient.BeginReceive(new AsyncCallback(ReceiveCallback), null);
         }
-        catch (Exception e) {
+        catch (SocketException e) {
+            if (e.SocketErrorCode == SocketError.ConnectionReset) {
+                Debug.LogWarning("Connection was forcibly closed by the remote host.");
+                udpClient.BeginReceive(new AsyncCallback(ReceiveCallback), null);
+                return;
+            }
             Debug.Log(e);
             Debug.Log("UDP Client Closed");
         }
     }
+
+
+
+
+
+    private Thread listenerThread;
+    // private UdpClient udpClient;
+    private bool isListening = false;
+    
+    void StartThreadedListener()
+    {
+        // udpClient = new UdpClient(8100); // Replace with your port number
+        isListening = true;
+        listenerThread = new Thread(ThreadedReceive);
+        listenerThread.IsBackground = true;
+        listenerThread.Start();
+    }
+
+    void ThreadedReceive() {
+        while (true) {
+            try{
+                IPEndPoint ip = new IPEndPoint(IPAddress.Any, listenPort);
+                byte[] bytes = udpClient.Receive(ref ip);
+                string clientAddress = ip.Address.ToString();
+
+                if (bytes.Length >= 9)
+                {
+                    string message = Encoding.UTF8.GetString(bytes.Skip(0).Take(9).ToArray());
+
+                    if (message == ClientConsts.CONNECTION_REQUEST) {
+                        Debug.Log("Received response from: " + clientAddress + " Message: " + message);
+                        var serverPort = 8100;
+                        var sendBytes = Encoding.UTF8.GetBytes(ServerConsts.CONNECTION_REPLY);
+                        IPEndPoint endPoint = new IPEndPoint(ip.Address, serverPort);
+                        udpClient.Send(sendBytes, sendBytes.Length, endPoint);
+                        ClientLookUp[clientAddress] = 0;
+                        Server.InstantiateQueue.Enqueue(clientAddress);
+                    }
+                    if (message == ClientConsts.CONTROLLER_POSITIONS) {
+                        if (ClientLookUp.ContainsKey(clientAddress) && ClientLookUp[clientAddress] < timeout_limit) {
+                            ClientLookUp[clientAddress] = 0f;
+                            Server.positions_queue.Enqueue((clientAddress, bytes.Skip(9).Take(bytes.Length - 9).ToArray()));
+                        }
+                    }
+                    if (message == ClientConsts.AXES) {
+                        if (ClientLookUp.ContainsKey(clientAddress) && ClientLookUp[clientAddress] < timeout_limit) {
+                            ClientLookUp[clientAddress] = 0f;
+                            Server.axes_queue.Enqueue((clientAddress, bytes.Skip(9).Take(bytes.Length - 9).ToArray()));
+                        }
+                    }
+                    if (message == ClientConsts.INPUTS) {
+                        if (ClientLookUp.ContainsKey(clientAddress) && ClientLookUp[clientAddress] < timeout_limit) {
+                            ClientLookUp[clientAddress] = 0f;
+                            Server.input_queue.Enqueue((clientAddress, bytes.Skip(9).Take(bytes.Length - 9).ToArray()));
+                        }
+                    }
+                }
+            }
+            catch (SocketException e) {
+                if (e.SocketErrorCode == SocketError.ConnectionReset) Debug.LogWarning("Connection was forcibly closed by the remote host.");
+                else {
+                    Debug.Log(e);
+                    Debug.Log("UDP Client Closed");
+                    break;
+                }
+            }
+        }
+    }
+
+
+
+    
 
     public void SendToAll(string header, byte[] message) {
         byte[] bytes = Encoding.UTF8.GetBytes(header).Concat(message).ToArray();

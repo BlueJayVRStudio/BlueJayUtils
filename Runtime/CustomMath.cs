@@ -62,6 +62,21 @@ namespace bluejayvrstudio
             subject.transform.rotation = target.transform.rotation;
         }
 
+        public static Quaternion AvgQuaternions(Quaternion[] quaternions) {
+            if (quaternions.Length == 0) return Quaternion.identity;
+            Quaternion average = quaternions[0];
+            float weight = 1.0f / quaternions.Length;
+            for (int i = 1; i < quaternions.Length; i++) average = Quaternion.Slerp(average, quaternions[i], weight);
+            return average;
+        }
+
+        public static Vector3 AvgVector3(Vector3[] vectors) {
+            if (vectors.Length == 0) return Vector3.zero;
+            Vector3 sum = Vector3.zero;
+            foreach (Vector3 vector in vectors) sum += vector;
+            return sum / vectors.Length;
+        }
+
     }
 
     public class TimeFormatter
